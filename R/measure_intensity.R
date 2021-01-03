@@ -147,3 +147,47 @@ mean_event_size <- function(x) {
 
   mean_size
 }
+
+
+# half precip -------------------------------------------------------------
+
+
+
+#' Number of days in which half of precip falls
+#'
+#' @param x numeric vector of daily precip for one year
+#' @param threshold discard values under a given threshold (good if worried about
+#'  sensor sensitivity of old data, etc)
+#'
+#' @return  number of wettest days it took to get half of the annual precip
+#'   (this is a metric of precip intensity) trying to do what is described by
+#'   Pendergrass and Knutti 2018
+#' @export
+#'
+#' @examples
+#' precip_half(c(0, 0.1, 0.5, 0.5))
+#' precip_half(x = c(1, 2, 1.5, 0.1, 0.1, 0.1), threshold = 0.1)
+precip_half <- function(x, threshold = 0){
+
+  if(sum(!is.na(x)) == 0) return(NA) # if all NA
+
+  prop_NA <- sum(is.na(x))/length(x) # proportion missing
+
+  if(prop_NA > 0.3) warning("greater than 30% missing values")
+
+  # if vector has no non-0 values
+  if(all(x %in% c(0, NA_real_))) return(0)
+
+  x <- x[x >= threshold]
+
+  total <- sum(x, na.rm = TRUE) # annual precip
+  x2 <- sort(x, decreasing = TRUE)
+  frac <- x2/total # faction of total precip
+  cum <- cumsum(frac) # cumulative fraction of total precip
+
+  # number of days it took to get at least half annual precip:
+  n_days <- which(cum >= .5)[1] # which
+
+  n_days
+}
+
