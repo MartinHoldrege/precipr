@@ -1,0 +1,19 @@
+Package: precipr
+Type: Package
+Title: Manipulating and examining precipitation intensity
+Version: 0.0.0.9000
+Author: Martin Holdrege
+Maintainer: Martin Holdrege <martinholdrege@gmail.com>
+Description: Just a collection of some simple R functions that are useful to me 
+    in manipulating precipitation, and for providing metrics of precipitation
+    intensity. I will use these inside the rSFSTEP2 wrapper when running 
+    simulations with increased intensity. 
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Imports:
+  dplyr,
+  tibble
+Suggests: 
+    testthat
+RoxygenNote: 7.1.1
