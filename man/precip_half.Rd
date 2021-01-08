@@ -9,7 +9,8 @@ precip_half(x, threshold = 0)
 \arguments{
 \item{x}{numeric vector of daily precip for one year}
 
-\item{threshold}{discard values under a given threshold (good if worried about}
+\item{threshold}{discard values under a given threshold (good if worried about
+sensor sensitivity of old data, etc)}
 }
 \value{
 number of wettest days it took to get half of the annual precip

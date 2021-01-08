@@ -90,6 +90,9 @@ max_event_length <- function(x) {
 create_event_df <- function(x) {
   stopifnot(is.numeric(x))
 
+  # for now this fun doesn't work with NAs, so considered 0 for now
+  x_old <- x
+  x[is.na(x)] <- 0
   # consider changing this threshold if necessary
   is_wet <- x > 0
 
@@ -113,6 +116,7 @@ create_event_df <- function(x) {
   x_events <- inverse.rle(runs2) # sequence w/ length x, giving event numbers
 
   df <- tibble::tibble(x = x, event = x_events)
+  df$x[is.na(x_old)] <- NA_real_ # add back original NAs
   df
 }
 

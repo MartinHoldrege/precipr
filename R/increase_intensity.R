@@ -85,7 +85,9 @@ incr_event_intensity <- function(x, from = 1, to = 1) {
 
   stopifnot(from >= 1,
             to >=1)
-
+  if (any(is.na(x))) {
+    stop("function not currently setup to deal with missing values")
+  }
   if(from %% 1 != 0 | to %% 1 != 0) {
     stop("from and to arguments need to be positive integers")
   }
