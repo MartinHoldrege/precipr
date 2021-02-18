@@ -4,9 +4,10 @@
 
 # functions to code a richardson and wright (1984) weather generator
 
-library(dplyr)
-wx_data <- readr::read_csv("data-raw/wx_ambient_site-5.csv")
-x <- wx_data$PPT_cm[data$month == 1]
+#' @import dplyr
+
+
+
 
 # To Do
 # checks: monthly SD, and mean temp, and precip
@@ -27,6 +28,7 @@ x <- wx_data$PPT_cm[data$month == 1]
 #' @export
 #'
 #' @examples
+#' x <- wx_data$PPT_cm[data$month == 1]
 #' P_W_X(x)
 P_W_X <- function(x, return = "both") {
   # probability of wet day following wet day
