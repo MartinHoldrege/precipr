@@ -3,11 +3,12 @@
 # script started 2/16/21
 
 # functions to code a richardson and wright (1984) weather generator
+# with some simplifications made on my part
 
 #' @import dplyr
 
-
-
+# recommended by devtools::check():
+# #' @importFrom stats, cor, rgamma, rnorm, runif, sd
 
 # To Do
 # checks: monthly SD, and mean temp, and precip
@@ -19,16 +20,21 @@
 # precipitation functions -------------------------------------------------
 
 
-#' Title
+#' @title  probability of rain given previous day's wet/dry status
 #'
-#' @param x
-#' @param return
+#' @description  Note: Next step is improve function by passing it the year as well,
+#' so don't 'look' at previous day that is actually the previous year
 #'
-#' @return
+#' @param x numeric vector of daily precip
+#' @param return use "both" (return both probabilities), "P_W_W" (probability
+#' is wet given previous day was wet), or "P_W_D" (prob wet given previous
+#' day was dry)
+#'
+#' @return vector of length 1 or 2
 #' @export
 #'
 #' @examples
-#' x <- wx_data$PPT_cm[data$month == 1]
+#' x <- wx_data$PPT_cm[wx_data$month == 1]
 #' P_W_X(x)
 P_W_X <- function(x, return = "both") {
   # probability of wet day following wet day
@@ -70,14 +76,18 @@ P_W_X <- function(x, return = "both") {
 
 
 
-#' Title
+#' monthly precipitation parameters
 #'
-#' @param data
+#' Next: adjust to also correct for year
 #'
-#' @return
+#' @param data dataframe of daily precipitation  (must include PPT_cm and month
+#' columns)
+#'
+#' @return dataframe
 #' @export
 #'
 #' @examples
+#' monthly_ppt_params(wx_data)
 monthly_ppt_params <- function(data) {
   threshold <- 0 # threshold for wet day
   # minimum required columns
@@ -100,13 +110,18 @@ monthly_ppt_params <- function(data) {
 }
 
 
-#' Title
+#' first order markov chain
 #'
-#' @param params
-#' @param start_date
-#' @param end_date
+#' Markov chain used simulate wet and dry days
 #'
-#' @return
+#' @param params dataframe of parameters from monthly_ppt_params() function or
+#' from adjust_params() function
+#' @param start_date start date of simulation
+#' @param end_date  end date of simulation
+#'
+#' @return dataframe, with date, year, month, day and is_wet columns. This final
+#' column is logical of whether precip occured that day
+#'
 #' @export
 #'
 #' @examples
@@ -155,13 +170,14 @@ markov_chain <- function(params,
   return(df1)
 }
 
-#' Title
+#' Adjust parameters of monthly precipitation
 #'
-#' @param params
-#' @param mean_mult
-#' @param sd_mult
+#' @param params  dataframe of parameters from monthly_ppt_params() function
+#' @param mean_mult amount to multiply the daily mean by
+#' @param sd_mult amount to multiply the standard deviation by
 #'
-#' @return
+#' @return adjusted parameters with probability of rain multiplied by
+#' a factor of 1/mean_mult so that total precip is held constant
 #' @export
 #'
 #' @examples
@@ -172,9 +188,11 @@ markov_chain <- function(params,
 #' df <- markov_chain(params2)
 #' df2 <- generate_events(df, params2)
 #' # make histograms
+#' if (FALSE){
 #' breaks <- seq(from = 0, to =10, by = 0.25)
 #' hist(df2$PPT_cm[df2$PPT_cm > 0], breaks = breaks)
 #' hist(wx_data$PPT_cm[wx_data$PPT_cm > 0],breaks = breaks)
+#' }
 adjust_params <- function(params, mean_mult, sd_mult) {
 
   stopifnot(is.data.frame(params),
@@ -194,12 +212,16 @@ adjust_params <- function(params, mean_mult, sd_mult) {
   params2
 }
 
-#' Title
+#' generate precipitation events
 #'
-#' @param df
-#' @param params
+#' Generate daily precipitation on wet days based on gamma distribution
+#' described by mean and SD in the params dataframe
 #'
-#' @return
+#' @param df dataframe, output from markov_chain() function
+#' @param params  dataframe of parameters from monthly_ppt_params() function
+#' or from adjust_params() function
+#'
+#' @return dataframe with PPT_cm (daily precip) column added
 #' @export
 #'
 #' @examples
@@ -207,9 +229,9 @@ adjust_params <- function(params, mean_mult, sd_mult) {
 #' df <- markov_chain(params)
 #' df2 <- generate_events(df, params)
 #' # calculate yearly ppt (original data is 31.6 cm)
-#' df2 %>% group_by(year) %>%
-#' summarize(PPT_cm = sum(PPT_cm)) %>%
-#' summarize(PPT_cm = mean(PPT_cm))
+#' df2 %>% dplyr::group_by(year) %>%
+#' dplyr::summarize(PPT_cm = sum(PPT_cm)) %>%
+#' dplyr::summarize(PPT_cm = mean(PPT_cm))
 generate_events <- function(df, params) {
   # df is output from markov_chain
 

@@ -1,22 +1,26 @@
 # temperature functions ---------------------------------------------------
 
 
-#' Title
+#' calculate the M0 matrix
 #'
-#' @param Tmax
-#' @param Tmin
+#' This is the autocorrelation/correlation matrix described in
+#' eq 8 in Richardson and Wright 1984, and is similar to Wilks, 2011, eq 11.21,
+#' except that Wilks uses covariance instead
 #'
-#' @return
+#' @param Tmax daily max temperature vector
+#' @param Tmin daily min temperature vector
+#'
+#' @return 2x2 matrix
 #' @export
 #'
 #' @examples
-#' df <- filter(wx_data, month == 1 & day %in% 1:7)
+#' df <- dplyr::filter(wx_data, month == 1 & day %in% 1:7)
 #' year <- df$year
 #' Tmax <- df$Tmax_C
 #' Tmin <- df$Tmin_C
 calc_M0 <- function(Tmax, Tmin) {
 
-  # M0 matrix;  eq 8 in Richardson and Wright 1984, except cov used (Wilks, eq 11.21)
+  # M0 matrix;  eq 8 in Richardson and Wright 1984,
   r0_max_min <- cor(Tmax, Tmin) # correlation (not lagged)
   out <- matrix(c(1, r0_max_min, r0_max_min, 1),
                 ncol = 2,
@@ -24,19 +28,29 @@ calc_M0 <- function(Tmax, Tmin) {
   out
 }
 
+#' Calculate the M1 matrix
+#'
+#' Lag 1 autocorrelation and correlation of min and max temp.
+#' eq 11.22b in Wilks 2011, except wilks used covariance instead of correlation.
+#' This is eq. 7 in Richardson and Wright (1984).
+#' Since I am calculating the
+#' lagged correlation by 'hand' (not using acf())
+#' the values are slightly (1% for one data set I check)
+#' different (b/ of how means calculated), but I'm
+#' doing that to deal with the issue of lagging across years.
+#'
+#' @param Tmax daily max temperature vector
+#' @param Tmin daily min temperature vector
+#' @param year vector of year. Year is included so lag 1 one works (not finding correlation
+#' with lagged value of the previous year)
+#'
+#' @return 2x2 matrix
+#' @export
 calc_M1 <- function(Tmax, Tmin, year) {
   stopifnot(length(Tmax) == length(Tmin),
             length(year) == length(Tmax))
-  # eq 11.22b in wilks 2011
 
 
-  # year is included so lag 1 one works (not finding covariance)
-  # with lagged value of the previous year
-
-  # since I am calculating the lagged covariance by 'hand' (not using acf())
-  # the values are be slighly (1% for one data set I check)
-  # different (b/ of how means calculated), but I'm
-  # doing that to deal with the issue of lagging across years
 
   # vectors for lagging
   t <- 1:(length(year)-1)
@@ -70,16 +84,18 @@ calc_M1 <- function(Tmax, Tmin, year) {
   out
 }
 
-#' Title
+#' Calculate A matrix
 #'
-#' @param M0
-#' @param M1
+#' Equation 4 in Richardson and Wright (1984)
 #'
-#' @return
+#' @param M0 M0 matrix (from calc_M0() function)
+#' @param M1 M1 matrix (from calc_M1() function)
+#'
+#' @return 2x2 matrix
 #' @export
 #'
 #' @examples
-#' df <- filter(wx_data, month == 2 & day %in% 1:7)
+#' df <- dplyr::filter(wx_data, month == 2 & day %in% 1:7)
 #' Tmax <- df$Tmax_C
 #' Tmin <- df$Tmin_C
 #' year <- df$year
@@ -87,15 +103,23 @@ calc_M1 <- function(Tmax, Tmin, year) {
 #' M1 <- calc_M1(Tmax, Tmin, year)
 #' A <- calc_A(M0, M1)
 calc_A <- function(M0, M1) {
-  # eq 6 in Richardson and Wright 1984
 
   A <- M1 %*% solve(M0)
   A
 }
 
+#' Calculate B matrix
+#'
+#' Equation 5 in Richardson and Wright (1984)
+#'
+#' @param M0 M0 matrix (from calc_M0() function)
+#' @param M1 M1 matrix (from calc_M1() function)
+#'
+#' @return 2x2 matrix
+#' @export
 calc_B <- function(M0, M1) {
 
-  # eq 7 in Richardson and Wright 1984
+  # eq 5 in Richardson and Wright 1984
   BBT <- M0 - M1 %*% solve(M0) %*% t(M1)
 
   # taking square root
@@ -105,11 +129,17 @@ calc_B <- function(M0, M1) {
   B
 }
 
-#' Title
+#' List of weekly temperature parameters
 #'
-#' @param data
+#' @param data dataframe of original weather dat with "date", "Tmax_C",
+#'  "Tmin_C", "PPT_cm" columns
 #'
-#' @return
+#' @return list with 52 elements (1 for each week of the year, week 52 and 53
+#' are combined). Each list element is a list that contains several elements
+#' including: "mean", mean temperature on all days; "sd", sd of temp;
+#' "wet_dry_temp", which is mean temp and wet and dry days; "A", A matrix;
+#' "B", B matrix.
+#'
 #' @export
 #'
 #' @examples
@@ -195,10 +225,12 @@ temp_wk_list <- function(data) {
 #' lines(test$Tmin_C, col = "blue")
 #' hist((test$Tmax_C-test$Tmin_C))
 #' # testing
+#' if (FALSE) {
 #' test <- generate_temp(wk_list, "1980-01-01", "2079-12-31") # 30 sec to run
-#' summarize(test, Tmax_C = mean(Tmax_C), Tmin_C = mean(Tmin_C))
+#' dplyr::summarize(test, Tmax_C = mean(Tmax_C), Tmin_C = mean(Tmin_C))
 #' # compare to original data
-#' summarize(wx_data, Tmax_C = mean(Tmax_C), Tmin_C = mean(Tmin_C))
+#' dplyr::summarize(wx_data, Tmax_C = mean(Tmax_C), Tmin_C = mean(Tmin_C))
+#' }
 generate_temp <- function(wk_list,
                           start_date = "1980-01-01",
                           end_date = "2010-12-31") {
@@ -254,12 +286,12 @@ generate_temp <- function(wk_list,
 
 }
 
-#' Title
+#' join temp and precip dataframes
 #'
-#' @param ppt_df
-#' @param temp_df
+#' @param ppt_df dataframe with precip (must have "date" column)
+#' @param temp_df dataframe with temperature (must have "date" column)
 #'
-#' @return
+#' @return dataframe joined on "date"
 #' @export
 #'
 #' @examples
