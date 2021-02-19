@@ -1,5 +1,7 @@
 # temperature functions ---------------------------------------------------
 
+# NEXT make function that adjusts mean temp to observed MAT
+# also make a main function that is a wrapper for all the other functions
 
 #' calculate the M0 matrix
 #'
@@ -309,7 +311,126 @@ join_temp_ppt <- function(ppt_df, temp_df) {
   out
 }
 
+# convert celsius to kelvin
+c2k <- function(x) x + 273.15
+
+# convert kelvin to c
+k2c <- function(x) x - 273.15
+
+# temperature modifier for wet or dry days
+temp_modifier <- function(all_days, x_days) {
+  # args:
+  #  all_days--temp on all days
+  #   x_days--temp on either wet or dry days
+  # returns: temp modifier to wet/dry days
+
+  # equation 13 in appendix S3 in Palmquist et al (in press, 2021)
+
+  # convert to degrees C to K
+  all_days <- c2k(all_days)
+  x_days <- c2k(x_days)
+  out <- x_days/all_days +(x_days - all_days)/all_days
+  out
+}
+
+
+smooth_modifier <- function(x) {
+  # to smooth the temp modifier, take averages of 4 week periods
+  # i'm doing this because there is a lot of scatter in the weekly modifiers
+  # however, I do see some seasonal trend so just a straight yearly average
+  # may not be appropriate
+  stopifnot(length(x) == 52)
+
+  # break into 4 week periods.
+  # this is mildly incorrect because 'week' 52 has more than 7 days, so weighting
+  # will be slightly off
+  period <- rep(1:13, each = 4)
+  period_mean <- aggregate(x, by = list(period = period), FUN = mean)
+  # 52 length vector, but each element is just the mean for the period
+  out <- period_mean$x[period]
+  names(out) <- names(x)
+  out
+}
+
+use_modifier <- function(x, week, is_wet, dry_mod, wet_mod) {
+  stopifnot(names(dry_mod) == as.character(1:52),
+            names(wet_mod) == as.character(1:52),
+            week %in% 1:52,
+            length(x) == length(week),
+            length(x) == length(is_wet))
+
+
+
+  x_k <- c2k(x)
+
+  # multiply by the wet day modifier for the given week
+  x_k[is_wet] <- x_k[is_wet]*wet_mod[week[is_wet]]
+
+  # multiply by dry day modifier
+  x_k[!is_wet] <- x_k[!is_wet]*dry_mod[week[!is_wet]]
+  x_c <- k2c(x_k)
+  x_c
+}
+
+
+#' adjust temperature for wet and dry days
+#'
+#' @param ppt_df data frame of precip data (from generate_events())
+#' @param temp_df dataframe of temp data from generate_temp()
+#' @param wk_list list of weakly temperature parameters from temp_wk_list()
+#'
+#' @return dataframe of PPT and temp, with Tmax_C and Tmin_C adjusted
+#' for wet/dry days
+#'
+#' @export
+#'
+#' @examples
+#' params <- monthly_ppt_params(wx_data)
+#' df1 <- markov_chain(params,  start_date = "1980-01-01", end_date = "1980-12-31")
+#' ppt_df <- generate_events(df1, params)
+#' wk_list <- temp_wk_list(wx_data)
+#' temp_df <- generate_temp(wk_list, start_date = "1980-01-01", end_date = "1980-12-31")
+#' comb <- adjust_temp(ppt_df, temp_df, wk_list)
+#' mean(comb$Tmax_C); mean(temp_df$Tmax_C)
 adjust_temp <- function(ppt_df, temp_df, wk_list) {
+
+  threshold <- 0 # wet day threshold
+
   df1 <- join_temp_ppt(ppt_df, temp_df)
-  # continue here
+
+  # calculating temperature modifiers for each week
+  Tmax_wet_mod <- purrr::map_dbl(wk_list, function(x) {
+    temp_modifier(all_days = x$means[["Tmax_mean"]],
+                  x_days = x$wet_dry_temp[["Tmax_wet"]])
+  })
+  Tmax_wet_mod <- smooth_modifier(Tmax_wet_mod)
+  Tmax_dry_mod <- purrr::map_dbl(wk_list, function(x) {
+    temp_modifier(all_days = x$means[["Tmax_mean"]],
+                  x_days = x$wet_dry_temp[["Tmax_dry"]])
+  })
+  Tmax_dry_mod <- smooth_modifier(Tmax_dry_mod)
+  Tmin_wet_mod <- purrr::map_dbl(wk_list, function(x) {
+    temp_modifier(all_days = x$means[["Tmin_mean"]],
+                  x_days = x$wet_dry_temp[["Tmin_wet"]])
+  })
+  Tmin_wet_mod <- smooth_modifier(Tmin_wet_mod)
+  Tmin_dry_mod <- purrr::map_dbl(wk_list, function(x) {
+    temp_modifier(all_days = x$means[["Tmin_mean"]],
+                  x_days = x$wet_dry_temp[["Tmin_dry"]])
+  })
+  Tmin_dry_mod <- smooth_modifier(Tmin_dry_mod)
+
+  is_wet <- df1$PPT_cm > threshold
+  df1$Tmax_C <- use_modifier(df1$Tmax_C,
+                             df1$week,
+                             is_wet = is_wet,
+                             dry_mod = Tmax_dry_mod,
+                             wet_mod = Tmax_wet_mod)
+
+  df1$Tmin_C <- use_modifier(df1$Tmin_C,
+                             df1$week,
+                             is_wet = is_wet,
+                             dry_mod = Tmin_dry_mod,
+                             wet_mod = Tmin_wet_mod)
+  return(df1)
 }

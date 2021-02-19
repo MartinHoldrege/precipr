@@ -22,10 +22,9 @@
 
 #' @title  probability of rain given previous day's wet/dry status
 #'
-#' @description  Note: Next step is improve function by passing it the year as well,
-#' so don't 'look' at previous day that is actually the previous year
-#'
 #' @param x numeric vector of daily precip
+#' @param year numeric vector. Passing function the year as well,
+#' so don't 'look' at previous day that is actually in previous year.
 #' @param return use "both" (return both probabilities), "P_W_W" (probability
 #' is wet given previous day was wet), or "P_W_D" (prob wet given previous
 #' day was dry)
@@ -35,20 +34,30 @@
 #'
 #' @examples
 #' x <- wx_data$PPT_cm[wx_data$month == 1]
-#' P_W_X(x)
-P_W_X <- function(x, return = "both") {
+#' year <- wx_data$year[wx_data$month == 1]
+#' return <- "both"
+#' P_W_X(x, year, return)
+P_W_X <- function(x, year, return = "both") {
   # probability of wet day following wet day
   stopifnot(is.numeric(x),
             all(!is.na(x)),
-            return %in% c("both", "P_W_W", "P_W_D"))
+            return %in% c("both", "P_W_W", "P_W_D"),
+            length(x) == length(year),
+            sort(year) == year)
 
   # could change definition of wet day to some threshold but using 0
   # because that is what stepwat2 was using
   threshold <- 0
   is_wet <- x > threshold
 
+  # if diff == 0, then is_prev_wet applies be/ the previous day of month
+  # was that year
+  same_year <- diff(year) == 0
   is_prev_wet <- is_wet[1:(length(x)-1)] # is previous day wet
+  is_prev_wet <- is_prev_wet[same_year]
+
   x2 <- x[-1] # can't look at day before the first day
+  x2 <- x2[same_year]
 
   # wet days that were wet on the preceding day
   W_W <- sum(x2[is_prev_wet] > 0)
@@ -78,10 +87,9 @@ P_W_X <- function(x, return = "both") {
 
 #' monthly precipitation parameters
 #'
-#' Next: adjust to also correct for year
 #'
-#' @param data dataframe of daily precipitation  (must include PPT_cm and month
-#' columns)
+#' @param data dataframe of daily precipitation  (must include PPT_cm, year,
+#' and  month columns)
 #'
 #' @return dataframe
 #' @export
@@ -91,7 +99,7 @@ P_W_X <- function(x, return = "both") {
 monthly_ppt_params <- function(data) {
   threshold <- 0 # threshold for wet day
   # minimum required columns
-  stopifnot(c("PPT_cm", "month") %in% names(data))
+  stopifnot(c("PPT_cm", "month", "year") %in% names(data))
 
   if ("site" %in% names(data) & length(unique(data$site)) != 1) {
     stop("function only meant to handle one site worth of data")
@@ -100,9 +108,11 @@ monthly_ppt_params <- function(data) {
   out <- data %>%
     ungroup() %>%
     group_by(.data$month) %>%
-    summarize(P_W_W = P_W_X(.data$PPT_cm, return = "P_W_W"), # prob wet, prev wet
+    summarize(P_W_W = P_W_X(.data$PPT_cm, year = .data$year,
+                            return = "P_W_W"), # prob wet, prev wet
               # prob wet given previous dry
-              P_W_D = P_W_X(.data$PPT_cm, return = "P_W_D"),
+              P_W_D = P_W_X(.data$PPT_cm, year = .data$year,
+                            return = "P_W_D"),
               PPT_mean = mean(.data$PPT_cm[.data$PPT_cm > threshold]),
               PPT_SD = sd(.data$PPT_cm[.data$PPT_cm > threshold]),
               .groups = "drop")
