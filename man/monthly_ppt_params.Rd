@@ -7,14 +7,14 @@
 monthly_ppt_params(data)
 }
 \arguments{
-\item{data}{dataframe of daily precipitation  (must include PPT_cm and month
-columns)}
+\item{data}{dataframe of daily precipitation  (must include PPT_cm, year,
+and  month columns)}
 }
 \value{
 dataframe
 }
 \description{
-Next: adjust to also correct for year
+monthly precipitation parameters
 }
 \examples{
 monthly_ppt_params(wx_data)

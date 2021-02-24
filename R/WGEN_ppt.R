@@ -13,9 +13,10 @@
 # To Do
 # checks: monthly SD, and mean temp, and precip
 # consecutive rain days
-# create wet day precip adjustment
 # adjust all temps to match long term mean
 # (i.e. to compensate for changes in wet/dry days)
+# adjust precip to match MAP (optional)
+# create ppt percentile mapping
 
 # precipitation functions -------------------------------------------------
 
@@ -101,7 +102,7 @@ monthly_ppt_params <- function(data) {
   # minimum required columns
   stopifnot(c("PPT_cm", "month", "year") %in% names(data))
 
-  if ("site" %in% names(data) & length(unique(data$site)) != 1) {
+  if ("site" %in% names(data) && length(unique(data$site)) != 1) {
     stop("function only meant to handle one site worth of data")
   }
 

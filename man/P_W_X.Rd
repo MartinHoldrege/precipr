@@ -4,10 +4,13 @@
 \alias{P_W_X}
 \title{probability of rain given previous day's wet/dry status}
 \usage{
-P_W_X(x, return = "both")
+P_W_X(x, year, return = "both")
 }
 \arguments{
 \item{x}{numeric vector of daily precip}
+
+\item{year}{numeric vector. Passing function the year as well,
+so don't 'look' at previous day that is actually in previous year.}
 
 \item{return}{use "both" (return both probabilities), "P_W_W" (probability
 is wet given previous day was wet), or "P_W_D" (prob wet given previous
@@ -17,10 +20,11 @@ day was dry)}
 vector of length 1 or 2
 }
 \description{
-Note: Next step is improve function by passing it the year as well,
-so don't 'look' at previous day that is actually the previous year
+probability of rain given previous day's wet/dry status
 }
 \examples{
 x <- wx_data$PPT_cm[wx_data$month == 1]
-P_W_X(x)
+year <- wx_data$year[wx_data$month == 1]
+return <- "both"
+P_W_X(x, year, return)
 }
