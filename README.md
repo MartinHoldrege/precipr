@@ -1,4 +1,4 @@
-# Precipr
+# precipr
 
 A collection of some R functions that are useful to me 
     in manipulating precipitation, and for calculating metrics of precipitation
