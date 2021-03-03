@@ -20,7 +20,6 @@
 
 # precipitation functions -------------------------------------------------
 
-
 #' @title  probability of rain given previous day's wet/dry status
 #'
 #' @param x numeric vector of daily precip
@@ -83,7 +82,6 @@ P_W_X <- function(x, year, return = "both") {
     stop("incorrect return string given")
   }
 }
-
 
 
 #' monthly precipitation parameters

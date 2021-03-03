@@ -43,7 +43,7 @@ WGEN_main <- function(data,
   # adjust parameters to increase intensity
   # note--later update these functions to adjust the 95th percentile instead
   if (mean_mult != 1 | sd_mult != 1) {
-    params <- adjust_params(params, mean_mult = meant_mult, sd_mult = sd_mult)
+    params <- adjust_params(params, mean_mult = mean_mult, sd_mult = sd_mult)
   }
 
   # generate wet/dry days

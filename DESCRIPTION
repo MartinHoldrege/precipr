@@ -21,7 +21,8 @@ Imports:
   purrr,
   lubridate,
   magrittr,
-  expm
+  expm,
+  rSOILWAT2
 Suggests: 
     testthat
 RoxygenNote: 7.1.1

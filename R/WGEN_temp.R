@@ -214,7 +214,74 @@ temp_wk_list <- function(data) {
   out
 }
 
+# WORK in progress
 
+#' dataframe of weekly temp parameters for adjusting rSOILWAT Wgen coeffs
+#'
+#'
+#' @param data dataframe of original weather dat with "Year", "DOY", "Tmax_C",
+#'  "Tmin_C", "PPT_cm" columns (columns as needed by
+#'  rSOILWAT2::dbW_estimate_WGen_coefs)
+#'
+#' @return a dataframe with mean temperature, and number of wet days in each
+#' week of year
+#'
+#' @export
+#'
+#' @examples
+#' data <-data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
+#' head(wk_summary_wgen(data))
+#' head(rSOILWAT2::dbW_estimate_WGen_coefs(data)[[1]])
+#' # compare
+#' wk_summary_wgen(data, mean_mult = 2)
+wk_summary_wgen <- function(data, mean_mult = 1) {
+
+  stopifnot(
+    is.data.frame(data),
+    c("Year", "DOY", "Tmax_C", "Tmin_C", "PPT_cm") %in% names(data)
+  )
+
+  threshold <- 0 # threshold for what is considered a wet day
+  df1 <- data
+
+  # this is the same way week is defined in rSOILWAT2::dbW_estimate_WGen_coefs
+  df1$week <- 1 + floor((df1$DOY - 1)/7)
+
+  # for calculating temp on wet and dry days
+  df1$is_wet <- df1$PPT_cm > threshold
+
+  out <- df1 %>%
+    group_by(.data$week) %>%
+    summarize("Tmax_mean" = mean(.data$Tmax_C),
+              "Tmin_mean" = mean(.data$Tmin_C),
+              "Tmax_dry" = mean(.data$Tmax_C[!.data$is_wet]),
+              "Tmax_wet" = mean(.data$Tmax_C[.data$is_wet]),
+              "Tmin_dry" = mean(.data$Tmin_C[!.data$is_wet]),
+              "Tmin_wet" = mean(.data$Tmin_C[.data$is_wet]),
+              # number of days total
+              "n_all" = length(.data$is_wet),
+              # number of wet days
+              "n_wet" = sum(.data$is_wet),
+              .groups = "drop") %>%
+    mutate(Tmax_new = adjust_all_days_temp(Tdry = .data$Tmax_dry,
+                                           Twet = .data$Tmax_wet,
+                                           n_all = .data$n_all,
+                                           n_wet = .data$n_wet,
+                                           mean_mult = mean_mult),
+          Tmin_new = adjust_all_days_temp(Tdry = .data$Tmin_dry,
+                                           Twet = .data$Tmin_wet,
+                                           n_all = .data$n_all,
+                                           n_wet = .data$n_wet,
+                                           mean_mult = mean_mult)
+    )
+
+
+  # making sure df is correctly ordered
+  stopifnot(out$week == 1:53)
+
+
+  out
+}
 
 #' generate temperature
 #'
