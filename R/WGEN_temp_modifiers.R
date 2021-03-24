@@ -49,8 +49,7 @@ adjust_all_days_temp <- function(Tdry, Twet, n_all, n_wet, mean_mult = 1) {
 #' temperature modifier
 #'
 #' @description Lower (raise) temperature of a day based on whether it is wet
-#' (dry). Currently I am not
-#'  using  equation 13 in appendix S3 in Palmquist et al (in press, 2021)
+#' (dry).
 #'
 #' @param all_days mean temp on all days
 #' @param x_days mean temp on wet (dry) days
@@ -203,3 +202,6 @@ adjust_temp <- function(ppt_df, temp_df, wk_list, mean_mult = 1) {
                              wet_mod = Tmin_wet_mod)
   return(df1)
 }
+
+
+

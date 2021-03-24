@@ -16,8 +16,7 @@ scalar modifier for wet (dry) days
 }
 \description{
 Lower (raise) temperature of a day based on whether it is wet
-(dry). Currently I am not
- using  equation 13 in appendix S3 in Palmquist et al (in press, 2021)
+(dry).
 }
 \examples{
 temp_modifier(10, 2)

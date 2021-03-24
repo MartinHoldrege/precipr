@@ -214,7 +214,6 @@ temp_wk_list <- function(data) {
   out
 }
 
-# WORK in progress
 
 #' dataframe of weekly temp parameters for adjusting rSOILWAT Wgen coeffs
 #'
@@ -222,6 +221,7 @@ temp_wk_list <- function(data) {
 #' @param data dataframe of original weather dat with "Year", "DOY", "Tmax_C",
 #'  "Tmin_C", "PPT_cm" columns (columns as needed by
 #'  rSOILWAT2::dbW_estimate_WGen_coefs)
+#' @param mean_mult what mean event size will be multiplied by
 #'
 #' @return a dataframe with mean temperature, and number of wet days in each
 #' week of year
@@ -279,9 +279,9 @@ wk_summary_wgen <- function(data, mean_mult = 1) {
   # making sure df is correctly ordered
   stopifnot(out$week == 1:53)
 
-
   out
 }
+
 
 #' generate temperature
 #'
