@@ -47,6 +47,9 @@ adjust_covar_in <- function(covar_in, data, mean_mult = 1) {
 #'
 #' @param prob_in prob.in file from rSOILWAT2
 #' @param mean_mult how much mean event size should be multiplied by
+#' @param adjust_sd logical, whether to adjust the PPT_sd for a give DOY.
+#' This option is used so that a draw from a normal distribution with a new
+#' (larger) mean is no more/less likely draw a negative value
 #'
 #' @return prob_in file with frequency and mean event size adjusted
 #' to maintain same total precipitation
@@ -57,7 +60,7 @@ adjust_covar_in <- function(covar_in, data, mean_mult = 1) {
 #' data <-data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
 #' prob_in <- rSOILWAT2::dbW_estimate_WGen_coefs(data)[[2]]
 #' adjust_prob_in(prob_in, mean_mult = 2)
-adjust_prob_in <- function(prob_in, mean_mult = 1) {
+adjust_prob_in <- function(prob_in, mean_mult = 1, adjust_sd = FALSE) {
   stopifnot(is.data.frame(prob_in))
 
   out <- prob_in
@@ -68,6 +71,22 @@ adjust_prob_in <- function(prob_in, mean_mult = 1) {
   # increasing mean event size
   out$PPT_avg <- out$PPT_avg*mean_mult
 
+  if (adjust_sd) {
+    # adjusting sd to account for the fact that annual ppt totals increase
+    # when you increase the standard deviation (for a fix mean), because negative
+    # draws are replaced with zero. This is my attempt to keep the expected value
+    # of the turncated normal distribution
+
+    # here using un-adjusted mean
+    z_vec <- (0 - prob_in$PPT_avg)/prob_in$PPT_sd # z score of 0 value
+    z_vec[!is.finite(z_vec)] <- NA
+
+    # here using new adjusted mean
+    out$PPT_sd <- (0-out$PPT_avg)/z_vec
+
+    # in case above calculate led to NAs, replace with original sd
+    out$PPT_sd[is.na(out$PPT_sd) | !is.finite(out$PPT_sd)] <- prob_in$PPT_sd
+  }
   out
 }
 
@@ -81,6 +100,9 @@ adjust_prob_in <- function(prob_in, mean_mult = 1) {
 #' @param mkv_in list created by rSOILWAT2::dbW_estimate_WGen_coefs
 #' @param data  daily wather data (dataframe)
 #' @param mean_mult what to multiply mean event sizes by
+#' @param adjust_sd logical, whether to adjust the PPT_sd for a give DOY.
+#' This option is used so that a draw from a normal distribution with a new
+#' (larger) mean is no more/less likely draw a negative value
 #'
 #' @return a list with same elements as
 #' @export
@@ -88,7 +110,7 @@ adjust_prob_in <- function(prob_in, mean_mult = 1) {
 #' @examples
 #' data <-data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
 #' mkv_in <- rSOILWAT2::dbW_estimate_WGen_coefs(data)
-adjust_mkv_in <- function(mkv_in, data, mean_mult = 1) {
+adjust_mkv_in <- function(mkv_in, data, mean_mult = 1, adjust_sd = FALSE) {
   stopifnot(
     is.list(mkv_in),
     names(mkv_in) == c("mkv_woy", "mkv_doy"),
@@ -104,7 +126,8 @@ adjust_mkv_in <- function(mkv_in, data, mean_mult = 1) {
 
    # adjust mean event size and frequency
   out$mkv_doy <- adjust_prob_in(prob_in = mkv_in$mkv_doy,
-                                mean_mult = mean_mult)
+                                mean_mult = mean_mult,
+                                adjust_sd = adjust_sd)
 
   out
 }

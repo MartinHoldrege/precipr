@@ -4,12 +4,16 @@
 \alias{adjust_prob_in}
 \title{adjust prob.in markov file to increase mean event size}
 \usage{
-adjust_prob_in(prob_in, mean_mult = 1)
+adjust_prob_in(prob_in, mean_mult = 1, adjust_sd = FALSE)
 }
 \arguments{
 \item{prob_in}{prob.in file from rSOILWAT2}
 
 \item{mean_mult}{how much mean event size should be multiplied by}
+
+\item{adjust_sd}{logical, whether to adjust the PPT_sd for a give DOY.
+This option is used so that a draw from a normal distribution with a new
+(larger) mean is no more/less likely draw a negative value}
 }
 \value{
 prob_in file with frequency and mean event size adjusted

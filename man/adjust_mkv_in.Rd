@@ -4,7 +4,7 @@
 \alias{adjust_mkv_in}
 \title{adjust the two elements of the list for the markov wx generator}
 \usage{
-adjust_mkv_in(mkv_in, data, mean_mult = 1)
+adjust_mkv_in(mkv_in, data, mean_mult = 1, adjust_sd = FALSE)
 }
 \arguments{
 \item{mkv_in}{list created by rSOILWAT2::dbW_estimate_WGen_coefs}
@@ -12,6 +12,10 @@ adjust_mkv_in(mkv_in, data, mean_mult = 1)
 \item{data}{daily wather data (dataframe)}
 
 \item{mean_mult}{what to multiply mean event sizes by}
+
+\item{adjust_sd}{logical, whether to adjust the PPT_sd for a give DOY.
+This option is used so that a draw from a normal distribution with a new
+(larger) mean is no more/less likely draw a negative value}
 }
 \value{
 a list with same elements as

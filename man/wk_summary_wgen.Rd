@@ -10,6 +10,8 @@ wk_summary_wgen(data, mean_mult = 1)
 \item{data}{dataframe of original weather dat with "Year", "DOY", "Tmax_C",
 "Tmin_C", "PPT_cm" columns (columns as needed by
 rSOILWAT2::dbW_estimate_WGen_coefs)}
+
+\item{mean_mult}{what mean event size will be multiplied by}
 }
 \value{
 a dataframe with mean temperature, and number of wet days in each
