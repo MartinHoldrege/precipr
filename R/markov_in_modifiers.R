@@ -40,6 +40,92 @@ adjust_covar_in <- function(covar_in, data, mean_mult = 1) {
   out
 }
 
+# probability of rain  ----------------------------------------------------
+
+#' probability of rain each day based on mkv_doy
+#'
+#' @param mkv_doy dataframe of daily markov ppt transition probabilities
+#'
+#' @return numeric vector giving probability of rain each day (non conditional)
+#' @export
+#'
+#' @examples
+#' data <-data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
+#' prob_in <- rSOILWAT2::dbW_estimate_WGen_coefs(data)[[2]]
+#' calc_p_W(mkv_doy = prob_in)
+calc_p_W <- function(mkv_doy) {
+
+  n <- nrow(mkv_doy)
+  stopifnot(n == 366) # code here meant to adjust for leap years
+  # probability of wet day on day 0,
+  # taking the P_W_D, of DOY 366, which
+  # will be a slight under estimate of P_W, so run loop again below
+  p_W_day0 <- mkv_doy$p_W_D[n]
+  p_W <- rep(NA, n) # probability doy is wet (unconditional)
+
+  # probability that doy 1 is wet
+  p_W[1] <- mkv_doy$p_W_W[1]*p_W_day0 + mkv_doy$p_W_D[1]*(1 - p_W_day0)
+  for (i in 2:n) {
+    p_W[i] <- mkv_doy$p_W_W[i]*p_W[i-1] + mkv_doy$p_W_D[i]*(1 - p_W[i-1])
+  }
+
+  # running again with p_W doy 366/365 now known better
+  # corrects the first few days of the year (4 days with one test dataset),
+  # after that values are identical to previous loop
+  # taking weighted mean of p_W for doy 366 and 365 to account for leap years
+  p_W_day0 <- 0.25*p_W[n] +  0.75*p_W[n - 1]
+  p_W[1] <- mkv_doy$p_W_W[1]*p_W_day0 + mkv_doy$p_W_D[1]*(1 - p_W_day0)
+  for (i in 2:n) {
+    p_W[i] <- mkv_doy$p_W_W[i]*p_W[i-1] + mkv_doy$p_W_D[i]*(1 - p_W[i-1])
+  }
+  p_W
+}
+
+
+# expected annual ppt -----------------------------------------------------
+
+
+#' @title  expected annual ppt based on markov coefficients
+#'
+#' @description Calculates probability of rain each day and from that calculates
+#' expected value of annual precip. Accounts for the fact that when wgen draws
+#' negative value from normal distribution that day is converted to a dry day--
+#' this is still in testing, and currently I have removed this feature (ie not
+#' accounting for truncated normal???)
+#' The problem with this function currently is that while observed/simulated
+#'  and expected
+#' ppt is normally very close, when the sd is increased, the mismatch grows
+#'
+#' @param coeffs --list that contains mkv_doy element
+#'
+#' @return expected value of annual precipitation
+#'
+#' @export
+expected_ppt <- function(coeffs) {
+  prob_gt0 <- with(coeffs$mkv_doy,
+                   pnorm(0, mean = PPT_avg, sd = PPT_sd, lower.tail = FALSE))
+
+  # probability of ppt each day (based on wet and dry probs)
+  p_W <- calc_p_W(coeffs$mkv_doy)
+
+  # i THOUGHT CORRECTING FOR TRUNCATED NORMAL AND FOR ADJUSTED
+  # PROBABILITY OF WHEN WAS APPROPRIATE BUT DOESN'T ACTUALLY REPRODUCE
+  # SIMULATED MAP--WHY?
+  # # corrected Prob of ppt
+  # p_W_cor <- p_W*prob_gt0
+  #
+  # # expected values on dry days
+  # ex <- p_W_cor*truncnorm::etruncnorm(a = 0, b = Inf,
+  #                                       mean = coeffs$mkv_doy$PPT_avg,
+  #                                       sd = coeffs$mkv_doy$PPT_sd)
+
+  ex <- p_W*coeffs$mkv_doy$PPT_avg
+  # weighted sum of annual ppt during leap yrs and normal years
+  out <- 0.25 * sum(ex) + 0.75*sum(ex[-366])
+  out
+}
+
+
 
 # adjust mkv_prob.in ------------------------------------------------------
 
@@ -61,15 +147,35 @@ adjust_covar_in <- function(covar_in, data, mean_mult = 1) {
 #' prob_in <- rSOILWAT2::dbW_estimate_WGen_coefs(data)[[2]]
 #' adjust_prob_in(prob_in, mean_mult = 2)
 adjust_prob_in <- function(prob_in, mean_mult = 1, adjust_sd = FALSE) {
-  stopifnot(is.data.frame(prob_in))
+  stopifnot(is.data.frame(prob_in),
+            nrow(prob_in) == 366)
 
   out <- prob_in
+
+  # calculate unconditional probabilities of ppt
+  p_W <- calc_p_W(prob_in)
+
+
   # reducing probabilities of ppt
-  out$p_W_W <- out$p_W_W/mean_mult
-  out$p_W_D <- out$p_W_D/mean_mult
+  # out$p_W_D is not changed, because the probability of ppt the previous
+  # day already was reduced by 1/mult
+
+  n <- nrow(prob_in)
+  # p_W for day 0 (ie last day of year, account for leap years)
+  p_W_doy0 <- 0.25*p_W[n] +  0.75*p_W[n - 1]
+
+  # the i-1 (ie previous doy's) p_w values
+  p_W_offset <- c(p_W_doy0, p_W[-n])
+
+  # this formula is being used so the the new p_W is equal to the old p_W/mean mult
+  # (i.e by appropriately dividing p_W_D)
+  W_D_mult <- mean_mult*(1 - p_W_offset/mean_mult)/(1 - p_W_offset)
+  out$p_W_D <- prob_in$p_W_D/W_D_mult
 
   # increasing mean event size
   out$PPT_avg <- out$PPT_avg*mean_mult
+
+  # now calc_pW(prob_in)/calc_p_W(out) should equal mean_mult
 
   if (adjust_sd) {
     # adjusting sd to account for the fact that annual ppt totals increase
