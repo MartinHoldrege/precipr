@@ -23,5 +23,4 @@ probability of rain each day based on mkv_doy
 data <-data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
 mkv_doy <- rSOILWAT2::dbW_estimate_WGen_coefs(data)[[2]]
 calc_p_W(mkv_doy = mkv_doy)
-calc_p_W(mkv_doy = mkv_doy, adjust_for_truncnorm = TRUE)
 }

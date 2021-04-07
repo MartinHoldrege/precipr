@@ -56,7 +56,6 @@ adjust_mkv_woy <- function(mkv_woy, data, mean_mult = 1) {
 #' data <-data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
 #' mkv_doy <- rSOILWAT2::dbW_estimate_WGen_coefs(data)[[2]]
 #' calc_p_W(mkv_doy = mkv_doy)
-#' calc_p_W(mkv_doy = mkv_doy, adjust_for_truncnorm = TRUE)
 calc_p_W <- function(mkv_doy, adjust_for_truncnorm = FALSE) {
 
   n <- nrow(mkv_doy)
@@ -146,10 +145,11 @@ calc_p_W <- function(mkv_doy, adjust_for_truncnorm = FALSE) {
 #' @return expected value of annual precipitation
 #'
 #' @export
+#' @examples
+#' coeffs <- rSOILWAT2::dbW_estimate_WGen_coefs(data)
+#' ex <- expected_ppt(coeffs, adjust_for_truncnorm = TRUE)
+#' ex
 expected_ppt <- function(coeffs, adjust_for_truncnorm = FALSE) {
-  # prob_gt0 <- with(coeffs$mkv_doy,
-  #                  pnorm(0, mean = PPT_avg, sd = PPT_sd, lower.tail = FALSE))
-
   # probability of ppt each day (based on wet and dry probs)
   p_W <- calc_p_W(coeffs$mkv_doy,
                   adjust_for_truncnorm = adjust_for_truncnorm)
@@ -158,9 +158,13 @@ expected_ppt <- function(coeffs, adjust_for_truncnorm = FALSE) {
   # whether this approach appropriately deals with the changes in probabilities
   # and expected values when mean event sizes are increased
   if (adjust_for_truncnorm) {
-    ex <- p_W*truncnorm::etruncnorm(a = 0, b = Inf,
-                                        mean = coeffs$mkv_doy$PPT_avg,
-                                        sd = coeffs$mkv_doy$PPT_sd)
+    # expected value from truncated normal
+    trunc_exp <- truncnorm::etruncnorm(a = 0, b = Inf,
+                                      mean = coeffs$mkv_doy$PPT_avg,
+                                      sd = coeffs$mkv_doy$PPT_sd)
+    # Nan value returned when 0 mean and 0 sd
+    trunc_exp <- ifelse(is.nan(trunc_exp), 0, trunc_exp)
+    ex <- p_W*trunc_exp
   } else {
     ex <- p_W*coeffs$mkv_doy$PPT_a
   }
@@ -170,7 +174,7 @@ expected_ppt <- function(coeffs, adjust_for_truncnorm = FALSE) {
   out
 }
 
-truncnorm::etruncnorm(a = 0, b = Inf, mean = c(2, 4),sd = 1:2)
+
 # expected n wet ----------------------------------------------------------
 
 #' expected number of wet days

@@ -26,3 +26,8 @@ The problem with this function currently is that while observed/simulated
  and expected
 ppt is normally very close, when the sd is increased, the mismatch grows
 }
+\examples{
+coeffs <- rSOILWAT2::dbW_estimate_WGen_coefs(data)
+ex <- expected_ppt(coeffs, adjust_for_truncnorm = TRUE)
+ex
+}
