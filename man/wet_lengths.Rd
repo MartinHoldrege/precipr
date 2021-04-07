@@ -18,4 +18,5 @@ Utility function used in subsequent functions
 }
 \examples{
 wet_lengths(c(0, 1, 1, 0, 1))
+wet_lengths(c(0, 0))
 }

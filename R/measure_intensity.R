@@ -16,8 +16,14 @@
 #' @export
 #' @examples
 #' wet_lengths(c(0, 1, 1, 0, 1))
+#' wet_lengths(c(0, 0))
 wet_lengths <- function(x) {
   stopifnot(is.numeric(x))
+
+  # if no ppt, then return 0 (ie wet length is 0)
+  if (all(x %in% 0)) {
+    return(0)
+  }
 
   # consider changing this threshold if necessary
   is_wet <- x > 0
