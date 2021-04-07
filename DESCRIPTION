@@ -22,7 +22,8 @@ Imports:
   lubridate,
   magrittr,
   expm,
-  rSOILWAT2
+  rSOILWAT2,
+  truncnorm
 Suggests: 
     testthat
 RoxygenNote: 7.1.1

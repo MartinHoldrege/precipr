@@ -4,10 +4,14 @@
 \alias{calc_p_W}
 \title{probability of rain each day based on mkv_doy}
 \usage{
-calc_p_W(mkv_doy)
+calc_p_W(mkv_doy, adjust_for_truncnorm = FALSE)
 }
 \arguments{
 \item{mkv_doy}{dataframe of daily markov ppt transition probabilities}
+
+\item{adjust_for_truncnorm}{logical, whether to adjust the number of
+expected wet days based on fact that the weather generator uses a truncated
+normal distribution (i.e. some 'wet' days then become dry)}
 }
 \value{
 numeric vector giving probability of rain each day (non conditional)
@@ -17,6 +21,7 @@ probability of rain each day based on mkv_doy
 }
 \examples{
 data <-data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
-prob_in <- rSOILWAT2::dbW_estimate_WGen_coefs(data)[[2]]
-calc_p_W(mkv_doy = prob_in)
+mkv_doy <- rSOILWAT2::dbW_estimate_WGen_coefs(data)[[2]]
+calc_p_W(mkv_doy = mkv_doy)
+calc_p_W(mkv_doy = mkv_doy, adjust_for_truncnorm = TRUE)
 }

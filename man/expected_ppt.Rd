@@ -4,10 +4,14 @@
 \alias{expected_ppt}
 \title{expected annual ppt based on markov coefficients}
 \usage{
-expected_ppt(coeffs)
+expected_ppt(coeffs, adjust_for_truncnorm = FALSE)
 }
 \arguments{
 \item{coeffs}{--list that contains mkv_doy element}
+
+\item{adjust_for_truncnorm}{logical, whether to adjust the number of
+expected wet days based on fact that the weather generator uses a truncated
+normal distribution (i.e. some 'wet' days then become dry)}
 }
 \value{
 expected value of annual precipitation

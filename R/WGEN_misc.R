@@ -22,3 +22,4 @@ week52 <- function(date) {
 #' @export
 #' @param lhs,rhs see magrittr documentation
 NULL
+
