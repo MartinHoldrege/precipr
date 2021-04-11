@@ -198,3 +198,75 @@ test_that("test expected map etc", {
 })
 
 
+# test site 119 data ------------------------------------------------------
+
+# There weren't actually problems with simulating site119,
+# it just has high inter-annual variance, so MAP is variable, unless
+# very many years simulated
+if (FALSE){
+test_that("site 119 coeffs", {
+
+  # coeffs
+  c119_amb <- rSOILWAT2::dbW_estimate_WGen_coefs(wdata119,
+                                                 imputation_type = "mean")
+
+  c119_2x <- adjust_coeffs(c119_amb, wdata119, mean_mult = 2)
+
+  # simple initial checks
+  expect_equal(c119_amb$mkv_doy$PPT_avg*2, c119_2x$mkv_doy$PPT_avg)
+  expect_equal(c119_amb$mkv_doy$PPT_sd*2, c119_2x$mkv_doy$PPT_sd)
+
+  ex_nwet_amb <- expected_nwet(c119_amb, adjust_for_truncnorm = TRUE)
+  ex_nwet_2x <- expected_nwet(c119_2x, adjust_for_truncnorm = TRUE)
+
+  nwet_diff <- abs(ex_nwet_amb/2 - ex_nwet_2x)
+  # very little difference in number of expected wet days
+  expect_lt(nwet_diff, 0.01)
+
+  # unconditional wet probabilities
+  p_W_amb <- calc_p_W(c119_amb$mkv_doy, adjust_for_truncnorm = TRUE)
+  p_W_2x <- calc_p_W(c119_2x$mkv_doy, adjust_for_truncnorm = TRUE)
+
+  p_W_diffs <- abs(p_W_amb/2 - p_W_2x)
+  # p_W difference as expected (2:1 ratio)
+  expect_lt(max(p_W_diffs), 0.001)
+
+  # expected ppt
+  ex_map_amb <- expected_ppt(c119_amb, adjust_for_truncnorm = TRUE)
+  ex_map_2x <- expected_ppt(c119_2x, adjust_for_truncnorm = TRUE)
+
+  expect_lt(abs(ex_map_2x - ex_map_amb), 0.01)
+
+  # simulated map
+  years2 <- 2000:3500
+  seed <- 126
+  wout119_amb <- rSOILWAT2::dbW_generateWeather(x_empty, years = years2,
+                                                wgen_coeffs = c119_amb,
+                                                seed = seed)
+  wout119_2x <- rSOILWAT2::dbW_generateWeather(x_empty, years = years2,
+                                               wgen_coeffs = c119_2x,
+                                               seed = seed)
+  sim_map_amb <- calc_map(wout119_amb)
+  sim_map_amb; ex_map_amb
+  sim_map_2x; ex_map_2x
+  sim_map_2x <- calc_map(wout119_2x)
+  sim_diff <-  sim_map_2x - sim_map_amb
+  sim_diff
+  if(abs(sim_diff) > 1) {
+    warning("simulated 2x and ambient MAP different for site 119")
+  }
+  hist(c119_amb$mkv_doy$PPT_avg/c119_amb$mkv_doy$PPT_sd)
+  hist(coeffs$mkv_doy$PPT_avg/coeffs$mkv_doy$PPT_sd)
+
+  # simulated nwet
+  sim_nwet_amb <- calc_nwet(wout119_amb)
+  sim_nwet_2x <- calc_nwet(wout119_2x)
+  # this difference suggests that the number of wet day's (ie p_W), is failing
+  # somehow. Not the mean event size (expected value on wet days)
+  sim_nwet_diff <- sim_nwet_2x*2 - sim_nwet_amb
+  if(abs(sim_nwet_diff) > 1) {
+    warning("site 119, simulating wrong number of wet days")
+  }
+
+})
+}
