@@ -1,7 +1,7 @@
 Package: precipr
 Type: Package
 Title: Manipulating and examining precipitation intensity
-Version: 0.0.0.9000
+Version: 0.0.1
 Author: Martin Holdrege
 Maintainer: Martin Holdrege <martinholdrege@gmail.com>
 Description: Just a collection of some simple R functions that are useful to me 
