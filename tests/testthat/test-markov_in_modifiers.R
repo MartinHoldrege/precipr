@@ -198,6 +198,37 @@ test_that("test expected map etc", {
 })
 
 
+# test adjust temp --------------------------------------------------------
+
+# ran into an issue with adjusting the correction factors, when the CFs
+# are 0, because no wet days in a given day. This was an issue with site 197.
+# testing that that is resolved, as well as the simulated temps are close
+test_that("adjusting CFs", {
+  coeffs_0cf <- coeffs
+  data_0cf <- data
+  # making one weeks have no pptc
+  data_0cf$PPT_cm[data_0cf$DOY %in% 7:15] <- 0
+  coeffs_0cf <- rSOILWAT2::dbW_estimate_WGen_coefs(data_0cf,
+                                                   imputation_type = "mean")
+
+  coeffs_0cf_2x <- adjust_coeffs(coeffs_0cf, data,
+                                 mean_mult = 2)
+
+  finite_check <- purrr::map(coeffs_0cf_2x$mkv_woy, is.finite) %>%
+    unlist()
+  expect_true(isTRUE(all(finite_check)))
+
+  # checking that min/max temps are similar
+  Tmax_amb <- calc_mat(wout1, col = "Tmax_C")
+  Tmax_2x <- calc_mat(wout1_adjust, col = "Tmax_C")
+
+  Tmin_amb <- calc_mat(wout1, col = "Tmin_C")
+  Tmin_2x <- calc_mat(wout1_adjust, col = "Tmin_C")
+
+  expect_lt(abs(Tmax_2x - Tmax_amb), 0.2)
+  expect_lt(abs(Tmin_2x - Tmin_amb), 0.1)
+})
+
 # test site 119 data ------------------------------------------------------
 
 # There weren't actually problems with simulating site119,

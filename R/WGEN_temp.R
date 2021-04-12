@@ -263,6 +263,12 @@ wk_summary_wgen <- function(data, mean_mult = 1) {
               # number of wet days
               "n_wet" = sum(.data$is_wet),
               .groups = "drop") %>%
+    # solving issue that when there are no wet days in a week, NaN is
+    # returned
+    mutate("Tmax_wet" = ifelse(!is.finite(.data$Tmax_wet), .data$Tmax_mean,
+                               .data$Tmax_wet),
+           "Tmin_wet" = ifelse(!is.finite(.data$Tmin_wet), .data$Tmin_mean,
+                               .data$Tmin_wet)) %>%
     mutate(Tmax_new = adjust_all_days_temp(Tdry = .data$Tmax_dry,
                                            Twet = .data$Tmax_wet,
                                            n_all = .data$n_all,
