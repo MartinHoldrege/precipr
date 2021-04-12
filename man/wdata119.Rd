@@ -18,7 +18,8 @@ A data frame with 11323 rows and 6 variables:
 wdata119
 }
 \description{
-A dataset for daily weather (from daymet 1 km product). This is the daily
+A dataset for daily weather (from daymet 1 km product).
+This is the daily
 weather for site 119 in Palmquist et al in press (2021). I'm including this
 dataset because it is useful for testing, because adjusting markov
 coefficients generated from this dataset exposed errors that other datasets

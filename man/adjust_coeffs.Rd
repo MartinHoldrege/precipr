@@ -27,7 +27,8 @@ decreased ppt frequency, and no change in mean temperature. Also no change
 in total precipitation
 }
 \examples{
-data <-data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
-coeffs <- rSOILWAT2::dbW_estimate_WGen_coefs(data)
-
+# data <- precipr::wdata119 # this a more 'difficult' dataset to try
+data <- data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
+coeffs <- rSOILWAT2::dbW_estimate_WGen_coefs(data, imputation_type = "mean")
+adjust_coeffs(coeffs, data, mean_mult = 2)
 }
