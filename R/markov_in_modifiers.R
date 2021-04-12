@@ -148,6 +148,7 @@ calc_p_W <- function(mkv_doy, adjust_for_truncnorm = FALSE) {
 #'
 #' @export
 #' @examples
+#' data <-data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))
 #' coeffs <- rSOILWAT2::dbW_estimate_WGen_coefs(data)
 #' ex <- expected_ppt(coeffs, adjust_for_truncnorm = TRUE)
 #' ex
@@ -273,7 +274,8 @@ adjust_mkv_doy <- function(mkv_doy,
     out$PPT_sd <- (0-out$PPT_avg)/z_vec
 
     # in case above calculate led to NAs, replace with original sd
-    out$PPT_sd[is.na(out$PPT_sd) | !is.finite(out$PPT_sd)] <- mkv_doy$PPT_sd
+    bad_sd <- is.na(out$PPT_sd) | !is.finite(out$PPT_sd)
+    out$PPT_sd[bad_sd] <- mkv_doy$PPT_sd[bad_sd]
   }
   out
 }
