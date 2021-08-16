@@ -22,13 +22,14 @@ A collection of some R functions that are useful to me
 
 The key function used in `rSFSTEP2` for adjusting coefficients for the weather generator is `adjust_coeffs()`. 
 
-Example data set (need `rSOILWAT2` installed).
+Example data set (need `rSOILWAT2` installed):
+
 `data <- data.frame(rSOILWAT2::dbW_weatherData_to_dataframe(rSOILWAT2::weatherData))`
 
-Calculate the coefficients for the markov weather generator.
+Calculate the coefficients for the markov weather generator:
 
 `coeffs <- rSOILWAT2::dbW_estimate_WGen_coefs(data, imputation_type = "mean")`
 
-Adjust the coefficients (in this example mean event size is doubled). 
+Adjust the coefficients (in this example mean event size is doubled):
 
 `adjust_coeffs(coeffs, data, mean_mult = 2)`
