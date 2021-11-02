@@ -10,7 +10,7 @@ A collection of some R functions that are useful to me
     distribution (gamma distribution), and rain frequency, but keeps total 
     precip the same). 
     
-    Disclaimer: Much of this code has not been extensively tested or is not full developed. 
+    Disclaimer: Much of this code has not been extensively tested or is not fully developed. 
 
 ## Install
 
