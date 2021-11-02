@@ -12,7 +12,7 @@ Description: Just a collection of some simple R functions that are useful to me
     Richardson, 1981) weather generator. This allows for altering the precipitation
     distribution (gamma distribution), and rain frequency, to but keep total 
     precip the same.
-License: MIT + file LICENSE
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
